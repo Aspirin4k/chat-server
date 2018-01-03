@@ -4,7 +4,6 @@ import (
 	"net"
 	"os"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"strconv"
 
@@ -17,12 +16,14 @@ import (
 func HandleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	// Чтение всего входящего потока
-	inputBytes, err := ioutil.ReadAll(conn)
+	fmt.Fprint(os.Stdout,"New connection...\n")
+	buffer := make([]byte, 1024)
+
+	reqLen, err := conn.Read(buffer)
 	error_catcher.CheckError(err)
 
 	// Разбитие на токены
-	input := string(inputBytes)
+	input := string(buffer[:reqLen])
 	fmt.Fprintf(os.Stdout,"Input data: %s\n", input)
 	tokenRows := strings.Split(input, "\n")
 	var tokens [][]string
@@ -53,7 +54,8 @@ func HandleConnection(conn net.Conn) {
 
 		nextNode, shouldAdd := tables.FindFinger(remoteID, ServerID)
 		if shouldAdd {
-			fmt.Fprint(os.Stdout, "Looks like he should be our successor......\n")
+			fmt.Fprint(os.Stdout, "Looks like he should be our successor...\n")
+			fmt.Fprintf(os.Stdout, "Send request to %s \n", nextNode.IP.String())
 			network_operations.JoinAddBefore(nextNode, remoteID, remoteIP)
 		} else {
 			fmt.Fprint(os.Stdout, "Ask another node to take care of him...\n")
@@ -125,8 +127,10 @@ func HandleConnection(conn net.Conn) {
 			fmt.Fprint(os.Stdout, "Some node somewhere joined the circle. We'll check, should we add him to our finger table!\n")
 
 			// Добавляем новый узел в пальцевую таблицу
-			var temp []declarations.Finger
-			copy(tables.FingerTable, temp)
+			temp := make([]declarations.Finger, len(tables.FingerTable))
+			copy(temp, tables.FingerTable)
+			fmt.Fprintf(os.Stdout, "Original table: %s\n", tables.FingerTable)
+			fmt.Fprintf(os.Stdout, "Copied temp table: %s\n", temp)
 			temp = append(
 				temp, declarations.Finger{remoteID, network_operations.ParseAddress(remoteIP)})
 

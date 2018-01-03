@@ -10,17 +10,26 @@ import (
 	"github.com/Aspirin4k/chat-server/error-catcher"
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
 	"github.com/Aspirin4k/chat-server/p2p/tables"
+	"github.com/Aspirin4k/chat-server/p2p/network-operations"
 )
 
 var ServerID 	  int
 var ServerAddress *net.TCPAddr
 
-func CreateAndListen(addr net.IP) {
+func CreateAndListen(addr net.IP, remoteIP net.IP) {
 	// Генерируем идентификатор и адрес
 	Create(addr)
 
 	listener, err := net.ListenTCP("tcp", ServerAddress)
 	error_catcher.CheckError(err)
+
+	// Отправляем запрос на подключение к сети
+	if remoteIP != nil {
+		remoteAddress, err := net.ResolveTCPAddr("tcp4",
+							fmt.Sprintf("%s:%d", remoteIP.String(), declarations.PORT))
+		error_catcher.CheckError(err)
+		network_operations.Join(remoteAddress, ServerID, ServerAddress)
+	}
 
 	fmt.Fprint(os.Stdout,"Starting listening...\n")
 	for {
@@ -30,7 +39,6 @@ func CreateAndListen(addr net.IP) {
 			continue
 		}
 
-		fmt.Fprint(os.Stdout,"New connection...\n")
 		go HandleConnection(conn)
 	}
 }
@@ -48,5 +56,5 @@ func Create(addr net.IP) {
 
 	tables.Init()
 	// Первая запись в пальцевой таблице
-	// tables.AddFinger(ServerID, ServerAddress)
+	tables.AddFinger(ServerID, ServerAddress)
 }

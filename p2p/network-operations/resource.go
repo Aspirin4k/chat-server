@@ -16,11 +16,11 @@ serverID - идентификатор локального хоста
  */
 func ReceiveIDs(address *net.TCPAddr, remoteID int, serverID int) {
 	var message string
-	message = fmt.Sprintf("%d %d\n", declarations.RESOURCE_RECEIVE_IDS, serverID)
+	message = fmt.Sprintf("%d %d", declarations.RESOURCE_RECEIVE_IDS, serverID)
 	for _, v := range tables.ResourcesIDsTable {
 		if (v.ID < remoteID) && (v.ID > serverID) && (remoteID > serverID) ||
 				(remoteID < serverID) && ((v.ID > serverID) || (v.ID < remoteID)) {
-			message += fmt.Sprintf("%d %s\n", v.ID, v.Address.IP.String())
+			message += fmt.Sprintf("\n%d %s", v.ID, v.Address.IP.String())
 			tables.ResourceRemoveByKey(v.ID);
 		}
 	}

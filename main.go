@@ -13,6 +13,7 @@ import (
 func main() {
 	host := flag.String("host", "127.0.0.1", "ip-address")
 	port := flag.Int("port", 7777, "port")
+	remote := flag.String("remote", "", "remote address to join the network")
 	flag.Parse()
 
 	addr := net.ParseIP(*host)
@@ -22,7 +23,14 @@ func main() {
 	}
 	fmt.Fprintf(os.Stdout,"Using address %s:%d\n", addr.String(), *port)
 
+	var addrRemote net.IP
+	addrRemote = nil
+	if *remote != "" {
+		addrRemote = net.ParseIP(*remote)
+		fmt.Fprintf(os.Stdout,"Remote address %s:%d\n", addrRemote.String(), *port)
+	}
+
 	go cui.Render()
 
-	p2p.CreateAndListen(addr)
+	p2p.CreateAndListen(addr, addrRemote)
 }

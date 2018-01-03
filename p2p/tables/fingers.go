@@ -24,7 +24,7 @@ func AddFinger(node int, address *net.TCPAddr) {
 		}
 	}
 
-	fmt.Fprint(os.Stdout,"Adding new finger...\n")
+	fmt.Fprintf(os.Stdout,"Adding new finger... {%d %s}\n", node, address.IP.String())
 	FingerTable = append(FingerTable, declarations.Finger{node,address})
 
 	trigger.Fire(FINGERS_CHANGED, FingerTable)
@@ -34,6 +34,7 @@ func AddFinger(node int, address *net.TCPAddr) {
 Очищает пальцевую таблицу
  */
 func ClearFingers() {
+	fmt.Fprint(os.Stdout,"Clearing finger table...\n")
 	FingerTable = FingerTable[:0]
 	trigger.Fire(FINGERS_CHANGED, FingerTable)
 }
@@ -85,6 +86,7 @@ func Predecessor(id int) *net.TCPAddr {
 func BuildFingers(fingers []declarations.Finger, serverID int) {
 	ClearFingers()
 	sort.Sort(ByID(fingers))
+	fmt.Fprintf(os.Stdout,"Sorted temp finger table: %s\n",fingers)
 	// Таблица должна быть log от размера хеша
 	for i:=0; i<declarations.FINGERS_SIZE; i++ {
 		for _, val := range fingers {

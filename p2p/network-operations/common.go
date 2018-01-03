@@ -13,6 +13,7 @@ func SendMessage(addr *net.TCPAddr, message string) {
 	conn, err := net.DialTCP("tcp", nil, addr)
 	error_catcher.CheckError(err)
 	fmt.Fprint(os.Stdout,"Connected to remote node..\n")
+	fmt.Fprintf(os.Stdout,"Sending: %s\n", message)
 
 	_, err = conn.Write([]byte(message))
 }
