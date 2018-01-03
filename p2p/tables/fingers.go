@@ -2,14 +2,14 @@ package tables
 
 import (
 	"fmt"
-	"os"
 	"net"
+	"math"
+	"sort"
 
 	"github.com/sadlil/go-trigger"
 
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
-	"math"
-	"sort"
+	"github.com/Aspirin4k/chat-server/error-catcher"
 )
 
 var FingerTable []declarations.Finger
@@ -24,7 +24,8 @@ func AddFinger(node int, address *net.TCPAddr) {
 		}
 	}
 
-	fmt.Fprintf(os.Stdout,"Adding new finger... {%d %s}\n", node, address.IP.String())
+	error_catcher.PushMessage(
+		fmt.Sprintf("Adding new finger... {%d %s}", node, address.IP.String()))
 	FingerTable = append(FingerTable, declarations.Finger{node,address})
 
 	trigger.Fire(FINGERS_CHANGED, FingerTable)
@@ -34,7 +35,7 @@ func AddFinger(node int, address *net.TCPAddr) {
 Очищает пальцевую таблицу
  */
 func ClearFingers() {
-	fmt.Fprint(os.Stdout,"Clearing finger table...\n")
+	error_catcher.PushMessage("Clearing finger table...")
 	FingerTable = FingerTable[:0]
 	trigger.Fire(FINGERS_CHANGED, FingerTable)
 }
@@ -86,11 +87,12 @@ func Predecessor(id int) *net.TCPAddr {
 func BuildFingers(fingers []declarations.Finger, serverID int) {
 	ClearFingers()
 	sort.Sort(ByID(fingers))
-	fmt.Fprintf(os.Stdout,"Sorted temp finger table: %s\n",fingers)
+	error_catcher.PushMessage(fmt.Sprintf("Sorted temp finger table: %s",fingers))
 	// Таблица должна быть log от размера хеша
 	for i:=0; i<declarations.FINGERS_SIZE; i++ {
 		for _, val := range fingers {
-			if (serverID + int(math.Pow(2, float64(i)))) % declarations.HASH_SIZE < val.Node {
+			if (val.Node != serverID) &&
+				(serverID + int(math.Pow(2, float64(i)))) % declarations.HASH_SIZE < val.Node {
 				AddFinger(val.Node, val.Address)
 				break
 			}

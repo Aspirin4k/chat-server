@@ -6,6 +6,7 @@ import (
 	"os"
 	"crypto/sha1"
 	"io"
+	"os/signal"
 
 	"github.com/Aspirin4k/chat-server/error-catcher"
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
@@ -23,6 +24,16 @@ func CreateAndListen(addr net.IP, remoteIP net.IP) {
 	listener, err := net.ListenTCP("tcp", ServerAddress)
 	error_catcher.CheckError(err)
 
+	// Вешаем запрос при отключении хоста
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt)
+	go func() {
+		for _ = range signalChannel {
+			fmt.Fprint(os.Stdout, "Closing...")
+			os.Exit(0)
+		}
+	}()
+
 	// Отправляем запрос на подключение к сети
 	if remoteIP != nil {
 		remoteAddress, err := net.ResolveTCPAddr("tcp4",
@@ -31,7 +42,7 @@ func CreateAndListen(addr net.IP, remoteIP net.IP) {
 		network_operations.Join(remoteAddress, ServerID, ServerAddress)
 	}
 
-	fmt.Fprint(os.Stdout,"Starting listening...\n")
+	error_catcher.PushMessage("Starting listening...")
 	for {
 		conn, err := listener.Accept()
 

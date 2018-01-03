@@ -1,20 +1,15 @@
 package cui
 
 import (
-	"fmt"
-
 	"github.com/jroimartin/gocui"
 	"github.com/Aspirin4k/chat-server/error-catcher"
-	"github.com/Aspirin4k/chat-server/p2p/declarations"
-	"time"
-	"os"
-	"sync"
 )
 
 var g *gocui.Gui
 
 var (
-	fingersMutex *sync.Mutex
+	messages *MessagesWidget
+	fingers *FingersWidget
 )
 
 /**
@@ -26,31 +21,32 @@ func Render() {
 	error_catcher.CheckError(err)
 	defer g.Close()
 
-	fingersMutex = &sync.Mutex{}
+	messages = NewMessagesWidget(0, 9, 79, 15,"")
+	fingers = NewFingersWidget(0, 0, 22, 8)
 
-	g.SetManagerFunc(layout)
+	g.SetManager(messages, fingers)
 
 	err = keybindings(g)
 	error_catcher.CheckError(err)
+	// Слушаем поток сообщений
+	go listenForMessages()
 
 	err = g.MainLoop()
-	error_catcher.CheckError(err)
-}
-
-/**
-Основной лейаут
- */
-func layout(g *gocui.Gui) error {
-	if _, err := g.SetView("fingers", 0, 0, 22, 8); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
+	if err != gocui.ErrQuit {
+		error_catcher.CheckError(err)
 	}
-	return nil
 }
 
 func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(
+		"", gocui.KeyArrowUp, gocui.ModNone, messagesMoveUp); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(
+		"", gocui.KeyArrowDown, gocui.ModNone, messagesMoveDown); err != nil {
 		return err
 	}
 	return nil
@@ -60,25 +56,19 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-func rerender(val []declarations.Finger) {
-	for g == nil {
-		time.Sleep(time.Millisecond * 500)
+func messagesMoveUp(g *gocui.Gui, v *gocui.View) error {
+	setMessagesPos(messages, messages.pos - 1)
+	return nil
+}
+
+func messagesMoveDown(g *gocui.Gui, v *gocui.View) error {
+	setMessagesPos(messages, messages.pos + 1)
+	return nil
+}
+
+func setMessagesPos(m *MessagesWidget, newPos int) error {
+	if (newPos > 0) && (newPos + m.h <= len(m.lines)) {
+		m.pos = newPos
 	}
-
-	fingersMutex.Lock()
-	g.Update(func(g *gocui.Gui) error {
-		view, err := g.View("fingers")
-		if err != nil {
-			fingersMutex.Unlock()
-			return err
-		}
-
-		view.Clear()
-		fmt.Fprintf(os.Stdout, "Rendering %s\n", val)
-		for _, finger := range val {
-			fmt.Fprintf(view, "%4d %15s", finger.Node, finger.Address.IP.String())
-		}
-		fingersMutex.Unlock()
-		return nil
-	})
+	return nil
 }

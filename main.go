@@ -8,6 +8,7 @@ import (
 
 	"github.com/Aspirin4k/chat-server/p2p"
 	"github.com/Aspirin4k/chat-server/cui"
+	"github.com/Aspirin4k/chat-server/error-catcher"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 		fmt.Fprintf(os.Stdout,"Remote address %s:%d\n", addrRemote.String(), *port)
 	}
 
+	error_catcher.Init()
 	go cui.Render()
-
 	p2p.CreateAndListen(addr, addrRemote)
 }

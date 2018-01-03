@@ -3,7 +3,6 @@ package network_operations
 import (
 	"net"
 	"fmt"
-	"os"
 
 	"github.com/Aspirin4k/chat-server/error-catcher"
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
@@ -12,8 +11,7 @@ import (
 func SendMessage(addr *net.TCPAddr, message string) {
 	conn, err := net.DialTCP("tcp", nil, addr)
 	error_catcher.CheckError(err)
-	fmt.Fprint(os.Stdout,"Connected to remote node..\n")
-	fmt.Fprintf(os.Stdout,"Sending: %s\n", message)
+	error_catcher.PushMessage(fmt.Sprintf("Sending: %s to %s", message, addr.IP.String()))
 
 	_, err = conn.Write([]byte(message))
 }

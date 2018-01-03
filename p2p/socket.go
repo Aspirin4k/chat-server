@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"net"
-	"os"
 	"fmt"
 	"strings"
 	"strconv"
@@ -16,7 +15,7 @@ import (
 func HandleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	fmt.Fprint(os.Stdout,"New connection...\n")
+	error_catcher.PushMessage("New connection...")
 	buffer := make([]byte, 1024)
 
 	reqLen, err := conn.Read(buffer)
@@ -24,7 +23,7 @@ func HandleConnection(conn net.Conn) {
 
 	// Разбитие на токены
 	input := string(buffer[:reqLen])
-	fmt.Fprintf(os.Stdout,"Input data: %s\n", input)
+	error_catcher.PushMessage(fmt.Sprintf("Input data: %s", input))
 	tokenRows := strings.Split(input, "\n")
 	var tokens [][]string
 	tokens = make([][]string, len(tokenRows), len(tokenRows))
@@ -49,17 +48,19 @@ func HandleConnection(conn net.Conn) {
 		var remoteIP string
 		remoteIP = tokens[0][2]
 
-		fmt.Fprintf(os.Stdout,
-			"New node %d %s wants to join the network\n", remoteID, remoteIP)
+		error_catcher.PushMessage(
+			fmt.Sprintf("New node %d %s wants to join the network", remoteID, remoteIP))
 
 		nextNode, shouldAdd := tables.FindFinger(remoteID, ServerID)
 		if shouldAdd {
-			fmt.Fprint(os.Stdout, "Looks like he should be our successor...\n")
-			fmt.Fprintf(os.Stdout, "Send request to %s \n", nextNode.IP.String())
+			error_catcher.PushMessage("Looks like he should be our successor...")
+			error_catcher.PushMessage(
+				fmt.Sprintf("Send request to %s", nextNode.IP.String()))
 			network_operations.JoinAddBefore(nextNode, remoteID, remoteIP)
 		} else {
-			fmt.Fprint(os.Stdout, "Ask another node to take care of him...\n")
-			fmt.Fprintf(os.Stdout, "Send request to %s \n", nextNode.IP.String())
+			error_catcher.PushMessage("Ask another node to take care of him...")
+			error_catcher.PushMessage(
+				fmt.Sprintf("Send request to %s", nextNode.IP.String()))
 			network_operations.SendMessage(nextNode, input)
 		}
 		break
@@ -74,14 +75,14 @@ func HandleConnection(conn net.Conn) {
 		var remoteIP string
 		remoteIP = tokens[0][2]
 
-		fmt.Fprintf(os.Stdout,
-			"Should send to %d %s some resources before adding him to network\n", remoteID, remoteIP)
+		error_catcher.PushMessage(
+			fmt.Sprintf("Should send to %d %s some resources before adding him to network", remoteID, remoteIP))
 
 		network_operations.ReceiveIDs(network_operations.ParseAddress(tokens[0][2]), remoteID, ServerID)
 		break
 	// Нам прислали некоторые ресурсы, с помощью которых мы должны проинициализировать таблицу ресурсов
 	case declarations.RESOURCE_RECEIVE_IDS:
-		fmt.Fprint(os.Stdout, "Should add some resources ids...\n")
+		error_catcher.PushMessage("Should add some resources ids...")
 		// Идентификатор удаленного узла
 		var remoteID int
 		remoteID, err = strconv.Atoi(tokens[0][1])
@@ -103,7 +104,7 @@ func HandleConnection(conn net.Conn) {
 		break
 	// Нас просят добавить хост в свою пальцевую таблицу
 	case declarations.NODE_ADD_ME_TO_FINGER:
-		fmt.Fprint(os.Stdout, "New node in here, need to add him to our finger table...\n")
+		error_catcher.PushMessage("New node in here, need to add him to our finger table...")
 		// Идентификатор удаленного узла
 		var remoteID int
 		remoteID, err = strconv.Atoi(tokens[0][1])
@@ -113,7 +114,7 @@ func HandleConnection(conn net.Conn) {
 		remoteIP = tokens[0][2]
 		// Если к нам вернулся наш же пакет
 		if remoteID == ServerID {
-			fmt.Fprint(os.Stdout, "Hey! Its our packet returned to us!\n")
+			error_catcher.PushMessage("Hey! Its our packet returned to us!")
 
 			var temp []declarations.Finger
 			for _, val := range tokens[1:] {
@@ -124,13 +125,12 @@ func HandleConnection(conn net.Conn) {
 
 			tables.BuildFingers(temp, ServerID)
 		} else {
-			fmt.Fprint(os.Stdout, "Some node somewhere joined the circle. We'll check, should we add him to our finger table!\n")
+			error_catcher.PushMessage(
+				"Some node somewhere joined the circle. We'll check, should we add him to our finger table!")
 
 			// Добавляем новый узел в пальцевую таблицу
 			temp := make([]declarations.Finger, len(tables.FingerTable))
 			copy(temp, tables.FingerTable)
-			fmt.Fprintf(os.Stdout, "Original table: %s\n", tables.FingerTable)
-			fmt.Fprintf(os.Stdout, "Copied temp table: %s\n", temp)
 			temp = append(
 				temp, declarations.Finger{remoteID, network_operations.ParseAddress(remoteIP)})
 
