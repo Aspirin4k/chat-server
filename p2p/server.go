@@ -48,5 +48,5 @@ func Create(addr net.IP) {
 
 	tables.Init()
 	// Первая запись в пальцевой таблице
-	tables.AddFinger(ServerID, ServerAddress)
+	// tables.AddFinger(ServerID, ServerAddress)
 }

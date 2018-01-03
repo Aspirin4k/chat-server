@@ -8,6 +8,8 @@ import (
 	"github.com/sadlil/go-trigger"
 
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
+	"math"
+	"sort"
 )
 
 var FingerTable []declarations.Finger
@@ -25,6 +27,14 @@ func AddFinger(node int, address *net.TCPAddr) {
 	fmt.Fprint(os.Stdout,"Adding new finger...\n")
 	FingerTable = append(FingerTable, declarations.Finger{node,address})
 
+	trigger.Fire(FINGERS_CHANGED, FingerTable)
+}
+
+/**
+Очищает пальцевую таблицу
+ */
+func ClearFingers() {
+	FingerTable = FingerTable[:0]
 	trigger.Fire(FINGERS_CHANGED, FingerTable)
 }
 
@@ -65,4 +75,39 @@ func Predecessor(id int) *net.TCPAddr {
 	} else {
 		return FingerTable[num].Address
 	}
+}
+
+/**
+Генерирует пальцевую таблицу
+@fingers - временная таблица, необязательно размера logn
+@serverID - идентификатор локального хоста
+ */
+func BuildFingers(fingers []declarations.Finger, serverID int) {
+	ClearFingers()
+	sort.Sort(ByID(fingers))
+	// Таблица должна быть log от размера хеша
+	for i:=0; i<declarations.FINGERS_SIZE; i++ {
+		for _, val := range fingers {
+			if (serverID + int(math.Pow(2, float64(i)))) % declarations.HASH_SIZE < val.Node {
+				AddFinger(val.Node, val.Address)
+				break
+			}
+		}
+	}
+}
+
+
+// Кастомная сортировка
+type ByID []declarations.Finger
+
+func (s ByID) Len() int {
+	return len(s)
+}
+
+func (s ByID) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s ByID) Less(i, j int) bool {
+	return s[i].Node < s[j].Node
 }
