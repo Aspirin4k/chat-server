@@ -20,7 +20,7 @@ func ReceiveIDs(address *net.TCPAddr, remoteID int, serverID int) {
 	for _, v := range tables.ResourcesIDsTable {
 		if (v.ID < remoteID) && (v.ID > serverID) && (remoteID > serverID) ||
 				(remoteID < serverID) && ((v.ID > serverID) || (v.ID < remoteID)) {
-			message += fmt.Sprintf("\n%d %s", v.ID, v.Address.IP.String())
+			message += fmt.Sprintf("\n%d %d %s", v.ID, v.HostID, v.Address.IP.String())
 			tables.ResourceRemoveByKey(v.ID);
 		}
 	}

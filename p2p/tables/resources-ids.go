@@ -8,6 +8,7 @@ import (
 
 type ResourceID struct {
 	ID 		int
+	HostID  int
 	Address *net.TCPAddr
 }
 var ResourcesIDsTable []ResourceID
@@ -15,7 +16,7 @@ var ResourcesIDsTable []ResourceID
 /**
 Добавляет ссылку на ресурс в таблицу идентификаторов ресурсов
  */
-func AddResource(id int, owner *net.TCPAddr) {
+func AddResource(id int, ownerId int, owner *net.TCPAddr) {
 	for _, v := range ResourcesIDsTable {
 		if v.ID == id {
 			return
@@ -23,7 +24,7 @@ func AddResource(id int, owner *net.TCPAddr) {
 	}
 
 	fmt.Fprint(os.Stdout,"Adding new resource identificator...\n")
-	ResourcesIDsTable = append(ResourcesIDsTable, ResourceID{id, owner})
+	ResourcesIDsTable = append(ResourcesIDsTable, ResourceID{id, ownerId, owner})
 }
 
 /**

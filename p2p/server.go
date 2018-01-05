@@ -29,7 +29,7 @@ func CreateAndListen(addr net.IP, remoteIP net.IP) {
 	signal.Notify(signalChannel, os.Interrupt)
 	go func() {
 		for _ = range signalChannel {
-			fmt.Fprint(os.Stdout, "Closing...")
+			network_operations.Leave(tables.Successor().Address, tables.Successor().Node, ServerID)
 			os.Exit(0)
 		}
 	}()

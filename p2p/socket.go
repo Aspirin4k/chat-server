@@ -93,10 +93,11 @@ func HandleConnection(conn net.Conn) {
 		tables.AddFinger(remoteID,
 			network_operations.ParseAddress(strings.Split(conn.RemoteAddr().String(), ":")[0]))
 
-		// Добавление новых ресурсов
+		// Добавляем его записи к своим
 		for _, val := range tokens[1:] {
-			id,_ := strconv.Atoi(val[0])
-			tables.AddResource(id, network_operations.ParseAddress(val[1]))
+			id, _ := strconv.Atoi(val[0])
+			hostId, _ := strconv.Atoi(val[1])
+			tables.AddResource(id, hostId, network_operations.ParseAddress(val[2]))
 		}
 
 		// Просим всех обновить свои пальцевые таблицы
@@ -138,6 +139,91 @@ func HandleConnection(conn net.Conn) {
 			tables.BuildFingers(temp, ServerID)
 			// Пересылаем сообщение дальше по кольцу
 			network_operations.AddMeToFingerMessage(tables.Successor().Address, ServerID, ServerAddress.IP.String(), input)
+		}
+		break
+	// Наш предшественник покидает сеть
+	case declarations.NODE_LEAVING:
+		error_catcher.PushMessage("Some node leaving the circle and sending to us his resources id")
+
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		// Добавляем его записи к своим
+		for _, val := range tokens[1:] {
+			id, _ := strconv.Atoi(val[0])
+			hostId, _ := strconv.Atoi(val[1])
+			tables.AddResource(id, hostId, network_operations.ParseAddress(val[2]))
+		}
+
+		// Удаляем записи со ссылкой на него
+		tables.ResourceRemoveByKey(remoteID)
+
+		// Оповещаем остальные узлы об отключившемся
+		if remoteID != tables.Successor().Node {
+			network_operations.Leaved(tables.Successor().Address, ServerAddress, ServerID, remoteID)
+		} else {
+			// Происходит в случае, если сеть состоит из двух узлов
+			tables.BuildFingers(
+				[]declarations.Finger{declarations.Finger{ServerID, ServerAddress}}, ServerID)
+		}
+		break
+	// Один из узлов сети отключился
+	case declarations.NODE_LEAVED:
+		error_catcher.PushMessage("Some node leaving the circle and sending to us his resources id")
+
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		// Если отвалился наш преемник
+		if tables.Successor().Node == remoteID {
+			error_catcher.PushMessage("Looks like our successor leaved!")
+
+			var temp []declarations.Finger
+			for _, val := range tokens[1:] {
+				id,_ := strconv.Atoi(val[0])
+				temp = append(
+					temp, declarations.Finger{id, network_operations.ParseAddress(val[1])})
+			}
+
+			tables.BuildFingers(temp, ServerID)
+
+			network_operations.UpdateFingers(
+				tables.Successor().Address, ServerID, ServerAddress.IP.String(), tokens[1:])
+
+		} else {
+			// Перекличка. Добавим наш адрес в данный список
+			input += fmt.Sprintf("\n%d %s", ServerID, ServerAddress.IP.String())
+			network_operations.SendMessage(tables.Successor().Address, input)
+		}
+
+		tables.ResourceRemoveByKey(remoteID)
+		break
+	// Обновление пальцевых таблиц
+	case declarations.FINGERS_UPDATE:
+		error_catcher.PushMessage("Stabilization after node leaved!")
+
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		// Если это не наш пакет, то обновляем пальцевую таблицу и пересылаем его далее
+		if remoteID != ServerID {
+
+			var temp []declarations.Finger
+			for _, val := range tokens[1:] {
+				id,_ := strconv.Atoi(val[0])
+				temp = append(
+					temp, declarations.Finger{id, network_operations.ParseAddress(val[1])})
+			}
+
+			tables.BuildFingers(temp, ServerID)
+
+			network_operations.SendMessage(tables.Successor().Address, input)
 		}
 		break
 	}

@@ -17,6 +17,9 @@ const (
 	NODE_JOINING_ADD_BEFORE
 	NODE_ADD_ME_TO_FINGER
 	RESOURCE_RECEIVE_IDS
+	NODE_LEAVING
+	NODE_LEAVED
+	FINGERS_UPDATE
 	UNKNOWN
 )
 
@@ -30,6 +33,12 @@ func GetCommandByValue(command int) Command {
 		return NODE_ADD_ME_TO_FINGER
 	case 4:
 		return RESOURCE_RECEIVE_IDS
+	case 5:
+		return NODE_LEAVING
+	case 6:
+		return NODE_LEAVED
+	case 7:
+		return FINGERS_UPDATE
 	}
 
 	return UNKNOWN
