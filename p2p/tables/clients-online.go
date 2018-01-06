@@ -13,6 +13,7 @@ var ActiveClientsTable []declarations.ActiveClient
 func AddActiveClient(addr *net.TCPAddr, id int) {
 	ActiveClientsTable =
 		append(ActiveClientsTable, declarations.ActiveClient{id,addr})
+	AddAllActiveClient(addr, id)
 
 	trigger.Fire(declarations.ACTIVE_CLIENTS_CHANGED, ActiveClientsTable)
 }

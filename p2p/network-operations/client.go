@@ -3,6 +3,7 @@ package network_operations
 import (
 	"net"
 	"fmt"
+
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
 )
 

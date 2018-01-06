@@ -91,8 +91,8 @@ func BuildFingers(fingers []declarations.Finger, serverID int) {
 	// Таблица должна быть log от размера хеша
 	for i:=0; i<declarations.FINGERS_SIZE; i++ {
 		for _, val := range fingers {
-			if ((val.Node != serverID) || len((fingers)) == 1) &&
-				(serverID + int(math.Pow(2, float64(i)))) % declarations.HASH_SIZE < val.Node {
+			if (len((fingers)) == 1) || ((val.Node != serverID) &&
+				(serverID + int(math.Pow(2, float64(i)))) % declarations.HASH_SIZE < val.Node) {
 				AddFinger(val.Node, val.Address)
 				break
 			}

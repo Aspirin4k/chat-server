@@ -10,6 +10,7 @@ const FINGERS_SIZE = 8
 const HASH_SIZE = 256
 const REGISTERED_CLIENTS_LOCATION = "./clients.txt"
 const DELIM = "|^|"
+const HEARTHBEAT_TICK = 5000
 
 type Finger struct {
 	Node 	int
@@ -25,6 +26,12 @@ type RegisteredClient struct {
 	ClientID int
 	Nickname string
 	Key      int
+}
+
+type StatusChanges struct {
+	ClientID int
+	Address  *net.TCPAddr
+	Status   int
 }
 
 /**
@@ -43,6 +50,7 @@ const (
 	CLIENT_ADD_TO_ONLINE_CLIENTS
 	CLIENT_NEW
 	CLIENT_ADD_TO_REGISTERED_CLIENTS
+	HEARTHBEAT
 	UNKNOWN
 )
 
@@ -70,6 +78,8 @@ func GetCommandByValue(command int) Command {
 		return CLIENT_NEW
 	case 11:
 		return CLIENT_ADD_TO_REGISTERED_CLIENTS
+	case 12:
+		return HEARTHBEAT
 	}
 
 	return UNKNOWN
@@ -90,4 +100,12 @@ const (
 	FINGERS_CHANGED = "FINGERS_CHANGED"
 	ACTIVE_CLIENTS_CHANGED = "ACTIVE_CLIENTS_CHANGED"
 	REGISTERED_CLIENTS_CHANGED = "REGISTERED_CLIENTS_CHANGED"
+)
+
+/**
+Статусы пользователя
+ */
+const (
+	CLIENT_ONLINE 	= 1
+	CLIENT_OFFLINE 	= 2
 )

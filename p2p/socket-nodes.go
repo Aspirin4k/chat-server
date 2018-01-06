@@ -121,6 +121,7 @@ func HandleConnection(conn net.Conn) {
 			}
 
 			tables.BuildFingers(temp, ServerID)
+			updateHearthbeat()
 		} else {
 			error_catcher.PushMessage(
 				"Some node somewhere joined the circle. We'll check, should we add him to our finger table!")
@@ -133,6 +134,7 @@ func HandleConnection(conn net.Conn) {
 
 			// Оптимизируем пальцевую таблицу
 			tables.BuildFingers(temp, ServerID)
+			updateHearthbeat()
 			// Пересылаем сообщение дальше по кольцу
 			network_operations.AddMeToFingerMessage(tables.Successor().Address, ServerID, ServerAddress.IP.String(), input)
 		}
@@ -159,6 +161,7 @@ func HandleConnection(conn net.Conn) {
 			// Происходит в случае, если сеть состоит из двух узлов
 			tables.BuildFingers(
 				[]declarations.Finger{declarations.Finger{ServerID, ServerAddress}}, ServerID)
+			network_operations.SetHearthbeatAddress(nil)
 		}
 		break
 	// Один из узлов сети отключился
@@ -183,6 +186,7 @@ func HandleConnection(conn net.Conn) {
 			}
 
 			tables.BuildFingers(temp, ServerID)
+			updateHearthbeat()
 
 			network_operations.UpdateFingers(
 				tables.Successor().Address, ServerID, ServerAddress.IP.String(), tokens[1:])
@@ -216,7 +220,7 @@ func HandleConnection(conn net.Conn) {
 			}
 
 			tables.BuildFingers(temp, ServerID)
-
+			updateHearthbeat()
 			network_operations.SendMessage(tables.Successor().Address, input)
 		}
 		break
@@ -248,9 +252,13 @@ func HandleConnection(conn net.Conn) {
 
 		tables.AddActiveClient(
 			network_operations.ParseAddress(tokens[0][2], declarations.PORT_CLIENTS), remoteID)
+		network_operations.AddUserOnline(
+			network_operations.ParseAddress(tokens[0][2], declarations.PORT_CLIENTS), remoteID)
 
 		// TODO: ОТВЕТИТЬ КЛИЕНТУ
 		break
+	// Попросить узел найти того, кто может добавить пользователя в таблицу
+	// зарегистрированных пользователей
 	case declarations.CLIENT_NEW:
 		error_catcher.PushMessage("Someone ask no register new client")
 		// Идентификатор удаленного узла
@@ -267,6 +275,7 @@ func HandleConnection(conn net.Conn) {
 			network_operations.SendMessage(node, input)
 		}
 		break
+	// Добавить пользователя в нашу таблицу зарегистрированных пользователей
 	case declarations.CLIENT_ADD_TO_REGISTERED_CLIENTS:
 		error_catcher.PushMessage("We should register client..")
 		// TODO: ПРОВЕРИТЬ КЛИЕНТА НА СУЩЕСТВОВАНИЕ
@@ -281,5 +290,38 @@ func HandleConnection(conn net.Conn) {
 
 		tables.AddRegisteredClient(remoteID, tokens[0][2], key)
 		break
+	// Синхронизация общих параметров
+	case declarations.HEARTHBEAT:
+		error_catcher.PushMessage("Synchronization..")
+		for _, val := range tokens[1:] {
+			status, _ := strconv.Atoi(val[0])
+			id, _ := strconv.Atoi(val[1])
+
+			switch status {
+			case declarations.CLIENT_ONLINE:
+				if tables.AddAllActiveClient(
+						network_operations.ParseAddress(val[2], declarations.PORT_CLIENTS), id) {
+					network_operations.AddUserOnline(
+						network_operations.ParseAddress(val[2], declarations.PORT_CLIENTS), id)
+				}
+				break
+			case declarations.CLIENT_OFFLINE:
+				tables.RemoveAllActiveClientById(id)
+				break
+			}
+		}
+		break
+	}
+}
+
+func updateHearthbeat() {
+	// Изменяем адрес, который му будем оповещать о событиях
+	if tables.Successor().Node != ServerID {
+		network_operations.SetHearthbeatAddress(tables.Successor().Address)
+		for _, val := range tables.AllActiveClients {
+			network_operations.AddUserOnline(val.Address, val.ClientID)
+		}
+	} else {
+		network_operations.SetHearthbeatAddress(nil)
 	}
 }

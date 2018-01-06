@@ -32,6 +32,8 @@ func CreateAndListen(addr net.IP, nodesPort int, clientsPort int, remoteIP net.I
 		// Остальные узлы, подключающиеся к сети получат нужную информацию уже от нас
 		tables.InitRegisteredClients()
 	}
+	tables.InitAllActiveClients()
+	network_operations.InitHearthbeat()
 
 	go listenNodes()
 	listenClients()

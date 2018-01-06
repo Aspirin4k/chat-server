@@ -71,7 +71,7 @@ func messagesMoveDown(g *gocui.Gui, v *gocui.View) error {
 }
 
 func setMessagesPos(m *MessagesWidget, newPos int) error {
-	if (newPos > 0) && (newPos + m.h < len(m.lines) + 1) {
+	if (newPos > 0) && (newPos + m.h <= len(m.lines) + 1) {
 		m.pos = newPos
 	}
 	return nil
