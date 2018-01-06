@@ -9,11 +9,13 @@ import (
 	"github.com/Aspirin4k/chat-server/p2p"
 	"github.com/Aspirin4k/chat-server/cui"
 	"github.com/Aspirin4k/chat-server/error-catcher"
+	"github.com/Aspirin4k/chat-server/p2p/declarations"
 )
 
 func main() {
 	host := flag.String("host", "127.0.0.1", "ip-address")
-	port := flag.Int("port", 7777, "port")
+	port := flag.Int("port", declarations.PORT, "port for listening nodes")
+	clientsPort := flag.Int("clients", declarations.PORT_CLIENTS, "port for listening clients")
 	remote := flag.String("remote", "", "remote address to join the network")
 	flag.Parse()
 
@@ -33,5 +35,5 @@ func main() {
 
 	error_catcher.Init()
 	go cui.Render()
-	p2p.CreateAndListen(addr, addrRemote)
+	p2p.CreateAndListen(addr, *port, *clientsPort, addrRemote)
 }

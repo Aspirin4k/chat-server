@@ -2,9 +2,11 @@ package cui
 
 import (
 	"sync"
-	"github.com/jroimartin/gocui"
-	"github.com/Aspirin4k/chat-server/error-catcher"
 	"fmt"
+
+	"github.com/jroimartin/gocui"
+
+	"github.com/Aspirin4k/chat-server/error-catcher"
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
 )
 

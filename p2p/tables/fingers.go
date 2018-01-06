@@ -28,7 +28,7 @@ func AddFinger(node int, address *net.TCPAddr) {
 		fmt.Sprintf("Adding new finger... {%d %s}", node, address.IP.String()))
 	FingerTable = append(FingerTable, declarations.Finger{node,address})
 
-	trigger.Fire(FINGERS_CHANGED, FingerTable)
+	trigger.Fire(declarations.FINGERS_CHANGED, FingerTable)
 }
 
 /**
@@ -37,7 +37,7 @@ func AddFinger(node int, address *net.TCPAddr) {
 func ClearFingers() {
 	error_catcher.PushMessage("Clearing finger table...")
 	FingerTable = FingerTable[:0]
-	trigger.Fire(FINGERS_CHANGED, FingerTable)
+	trigger.Fire(declarations.FINGERS_CHANGED, FingerTable)
 }
 
 /**

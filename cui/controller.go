@@ -12,9 +12,18 @@ func UpdateChanges(event string) interface{} {
 		time.Sleep(time.Millisecond * 500)
 	}
 
-	return func(table []declarations.Finger) {
-		updateFingerTable(fingers, table, g)
+	switch event {
+	case declarations.FINGERS_CHANGED:
+		return func(table []declarations.Finger) {
+			updateFingerTable(fingers, table, g)
+		}
+	case declarations.ACTIVE_CLIENTS_CHANGED:
+		return func(table []declarations.ActiveClient) {
+			updateActiveClientsTable(activeClients, table, g)
+		}
 	}
+
+	return nil
 }
 
 func listenForMessages() {

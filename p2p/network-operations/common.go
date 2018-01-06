@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Aspirin4k/chat-server/error-catcher"
-	"github.com/Aspirin4k/chat-server/p2p/declarations"
 )
 
 func SendMessage(addr *net.TCPAddr, message string) {
@@ -16,9 +15,9 @@ func SendMessage(addr *net.TCPAddr, message string) {
 	_, err = conn.Write([]byte(message))
 }
 
-func ParseAddress(address string) *net.TCPAddr {
+func ParseAddress(address string, port int) *net.TCPAddr {
 	tcpAddr, err := net.ResolveTCPAddr("tcp4",
-		fmt.Sprintf("%s:%d", address, declarations.PORT))
+		fmt.Sprintf("%s:%d", address, port))
 	error_catcher.CheckError(err)
 
 	return tcpAddr

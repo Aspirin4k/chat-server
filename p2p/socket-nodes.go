@@ -78,7 +78,7 @@ func HandleConnection(conn net.Conn) {
 		error_catcher.PushMessage(
 			fmt.Sprintf("Should send to %d %s some resources before adding him to network", remoteID, remoteIP))
 
-		network_operations.ReceiveIDs(network_operations.ParseAddress(tokens[0][2]), remoteID, ServerID)
+		network_operations.ReceiveIDs(network_operations.ParseAddress(tokens[0][2], declarations.PORT), remoteID, ServerID)
 		break
 	// Нам прислали некоторые ресурсы, с помощью которых мы должны проинициализировать таблицу ресурсов
 	case declarations.RESOURCE_RECEIVE_IDS:
@@ -91,13 +91,15 @@ func HandleConnection(conn net.Conn) {
 		// Добавим товарища в нашу пальцевую таблицу
 		tables.ClearFingers()
 		tables.AddFinger(remoteID,
-			network_operations.ParseAddress(strings.Split(conn.RemoteAddr().String(), ":")[0]))
+			network_operations.ParseAddress(strings.Split(conn.RemoteAddr().String(), ":")[0], declarations.PORT))
 
 		// Добавляем его записи к своим
 		for _, val := range tokens[1:] {
 			id, _ := strconv.Atoi(val[0])
-			hostId, _ := strconv.Atoi(val[1])
-			tables.AddResource(id, hostId, network_operations.ParseAddress(val[2]))
+			//hostId, _ := strconv.Atoi(val[1])
+			//tables.AddResource(id, hostId, network_operations.ParseAddress(val[2], declarations.PORT))
+			tables.AddActiveClient(
+				network_operations.ParseAddress(val[1], declarations.PORT_CLIENTS),id)
 		}
 
 		// Просим всех обновить свои пальцевые таблицы
@@ -121,7 +123,7 @@ func HandleConnection(conn net.Conn) {
 			for _, val := range tokens[1:] {
 				id,_ := strconv.Atoi(val[0])
 				temp = append(
-					temp, declarations.Finger{id, network_operations.ParseAddress(val[1])})
+					temp, declarations.Finger{id, network_operations.ParseAddress(val[1], declarations.PORT)})
 			}
 
 			tables.BuildFingers(temp, ServerID)
@@ -133,7 +135,7 @@ func HandleConnection(conn net.Conn) {
 			temp := make([]declarations.Finger, len(tables.FingerTable))
 			copy(temp, tables.FingerTable)
 			temp = append(
-				temp, declarations.Finger{remoteID, network_operations.ParseAddress(remoteIP)})
+				temp, declarations.Finger{remoteID, network_operations.ParseAddress(remoteIP, declarations.PORT)})
 
 			// Оптимизируем пальцевую таблицу
 			tables.BuildFingers(temp, ServerID)
@@ -153,8 +155,10 @@ func HandleConnection(conn net.Conn) {
 		// Добавляем его записи к своим
 		for _, val := range tokens[1:] {
 			id, _ := strconv.Atoi(val[0])
-			hostId, _ := strconv.Atoi(val[1])
-			tables.AddResource(id, hostId, network_operations.ParseAddress(val[2]))
+			//hostId, _ := strconv.Atoi(val[1])
+			//tables.AddResource(id, hostId, network_operations.ParseAddress(val[2], declarations.PORT))
+			tables.AddActiveClient(
+				network_operations.ParseAddress(val[1], declarations.PORT_CLIENTS), id)
 		}
 
 		// Удаляем записи со ссылкой на него
@@ -186,7 +190,8 @@ func HandleConnection(conn net.Conn) {
 			for _, val := range tokens[1:] {
 				id,_ := strconv.Atoi(val[0])
 				temp = append(
-					temp, declarations.Finger{id, network_operations.ParseAddress(val[1])})
+					temp, declarations.Finger{id,
+					network_operations.ParseAddress(val[1], declarations.PORT)})
 			}
 
 			tables.BuildFingers(temp, ServerID)
@@ -218,13 +223,43 @@ func HandleConnection(conn net.Conn) {
 			for _, val := range tokens[1:] {
 				id,_ := strconv.Atoi(val[0])
 				temp = append(
-					temp, declarations.Finger{id, network_operations.ParseAddress(val[1])})
+					temp,
+					declarations.Finger{id, network_operations.ParseAddress(val[1], declarations.PORT)})
 			}
 
 			tables.BuildFingers(temp, ServerID)
 
 			network_operations.SendMessage(tables.Successor().Address, input)
 		}
+		break
+	// Подключается клиент, необходимо найти хост, который будет его слушать
+	case declarations.CLIENT_LOGIN:
+		error_catcher.PushMessage("Someone asks us to join client..")
+
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		node, isSuccessor := tables.FindFinger(remoteID, ServerID)
+
+		if isSuccessor {
+			network_operations.AddToOnline(node, remoteID, tokens[0][2])
+		} else {
+			network_operations.Loggining(node, remoteID, tokens[0][2])
+		}
+		break
+	// К нашему хосту должен подключиться клиент
+	case declarations.CLIENT_ADD_TO_ONLINE_CLIENTS:
+		error_catcher.PushMessage("We should join client..")
+		// TODO: ПРОВЕРИТЬ КЛИЕНТА НА СУЩЕСТВОВАНИЕ
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		tables.AddActiveClient(
+			network_operations.ParseAddress(tokens[0][2], declarations.PORT_CLIENTS), remoteID)
 		break
 	}
 }

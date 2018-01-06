@@ -8,8 +8,9 @@ import (
 var g *gocui.Gui
 
 var (
-	messages *MessagesWidget
-	fingers *FingersWidget
+	messages 		*MessagesWidget
+	fingers 		*FingersWidget
+	activeClients	*ActiveClientsWidget
 )
 
 /**
@@ -23,8 +24,9 @@ func Render() {
 
 	messages = NewMessagesWidget(0, 9, 79, 15,"")
 	fingers = NewFingersWidget(0, 0, 22, 8)
+	activeClients = NewActiveClientsWidget(23,0,22,8)
 
-	g.SetManager(messages, fingers)
+	g.SetManager(messages, fingers, activeClients)
 
 	err = keybindings(g)
 	error_catcher.CheckError(err)
