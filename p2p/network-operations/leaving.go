@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Aspirin4k/chat-server/p2p/declarations"
-	"github.com/Aspirin4k/chat-server/p2p/tables"
 )
 
 /**
@@ -15,16 +14,7 @@ func Leave(addr *net.TCPAddr, remoteId, serverId int) {
 	// Если мы не единственный узел в сети
 	if remoteId != serverId {
 		msg := fmt.Sprintf("%d %d", declarations.NODE_LEAVING, serverId)
-		//for _, val := range tables.ResourcesIDsTable {
-		//	// Если этот ресурс не является нашим локальным, то отсылаем запись о нем
-		//	if (val.HostID != serverId) {
-		//		msg += fmt.Sprintf("\n%d %d %s", val.ID, val.HostID, val.Address)
-		//	}
-		//}
-		for _, val := range tables.ActiveClientsTable {
-			msg += fmt.Sprintf("\n%d %s", val.ClientID, val.Address.IP.String())
-		}
-
+		msg += fmt.Sprintf("\n%s", PrepareResources())
 		SendMessage(addr, msg)
 	}
 }

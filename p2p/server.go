@@ -28,6 +28,9 @@ func CreateAndListen(addr net.IP, nodesPort int, clientsPort int, remoteIP net.I
 			fmt.Sprintf("%s:%d", remoteIP.String(), NodesPort))
 		error_catcher.CheckError(err)
 		network_operations.Join(remoteAddress, ServerID, ServerAddress)
+	} else {
+		// Остальные узлы, подключающиеся к сети получат нужную информацию уже от нас
+		tables.InitRegisteredClients()
 	}
 
 	go listenNodes()
@@ -60,6 +63,7 @@ func Create(addr net.IP, nodesPort int, clientsPort int) {
 			if len(tables.FingerTable) > 0 {
 				network_operations.Leave(tables.Successor().Address, tables.Successor().Node, ServerID)
 			}
+			tables.SaveRegisteredClients()
 			os.Exit(0)
 		}
 	}()

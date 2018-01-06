@@ -12,4 +12,6 @@ func Init() {
 		declarations.FINGERS_CHANGED, cui.UpdateChanges(declarations.FINGERS_CHANGED))
 	trigger.On(
 		declarations.ACTIVE_CLIENTS_CHANGED, cui.UpdateChanges(declarations.ACTIVE_CLIENTS_CHANGED))
+	trigger.On(
+		declarations.REGISTERED_CLIENTS_CHANGED, cui.UpdateChanges(declarations.REGISTERED_CLIENTS_CHANGED))
 }

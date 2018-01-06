@@ -94,13 +94,7 @@ func HandleConnection(conn net.Conn) {
 			network_operations.ParseAddress(strings.Split(conn.RemoteAddr().String(), ":")[0], declarations.PORT))
 
 		// Добавляем его записи к своим
-		for _, val := range tokens[1:] {
-			id, _ := strconv.Atoi(val[0])
-			//hostId, _ := strconv.Atoi(val[1])
-			//tables.AddResource(id, hostId, network_operations.ParseAddress(val[2], declarations.PORT))
-			tables.AddActiveClient(
-				network_operations.ParseAddress(val[1], declarations.PORT_CLIENTS),id)
-		}
+		network_operations.ConcatenateResources(tokens[1:])
 
 		// Просим всех обновить свои пальцевые таблицы
 		network_operations.AddMeToFinger(tables.Successor().Address, ServerID, ServerAddress.IP.String())
@@ -153,13 +147,7 @@ func HandleConnection(conn net.Conn) {
 		error_catcher.CheckError(err)
 
 		// Добавляем его записи к своим
-		for _, val := range tokens[1:] {
-			id, _ := strconv.Atoi(val[0])
-			//hostId, _ := strconv.Atoi(val[1])
-			//tables.AddResource(id, hostId, network_operations.ParseAddress(val[2], declarations.PORT))
-			tables.AddActiveClient(
-				network_operations.ParseAddress(val[1], declarations.PORT_CLIENTS), id)
-		}
+		network_operations.ConcatenateResources(tokens[1:])
 
 		// Удаляем записи со ссылкой на него
 		tables.ResourceRemoveByKey(remoteID)
@@ -246,7 +234,7 @@ func HandleConnection(conn net.Conn) {
 		if isSuccessor {
 			network_operations.AddToOnline(node, remoteID, tokens[0][2])
 		} else {
-			network_operations.Loggining(node, remoteID, tokens[0][2])
+			network_operations.SendMessage(node, input)
 		}
 		break
 	// К нашему хосту должен подключиться клиент
@@ -260,6 +248,38 @@ func HandleConnection(conn net.Conn) {
 
 		tables.AddActiveClient(
 			network_operations.ParseAddress(tokens[0][2], declarations.PORT_CLIENTS), remoteID)
+
+		// TODO: ОТВЕТИТЬ КЛИЕНТУ
+		break
+	case declarations.CLIENT_NEW:
+		error_catcher.PushMessage("Someone ask no register new client")
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		node, isSuccessor := tables.FindFinger(remoteID, ServerID)
+
+		if isSuccessor {
+			network_operations.AddToRegistered(
+				node, remoteID, tokens[0][2], tokens[0][3], tokens[0][4])
+		} else {
+			network_operations.SendMessage(node, input)
+		}
+		break
+	case declarations.CLIENT_ADD_TO_REGISTERED_CLIENTS:
+		error_catcher.PushMessage("We should register client..")
+		// TODO: ПРОВЕРИТЬ КЛИЕНТА НА СУЩЕСТВОВАНИЕ
+		// Идентификатор удаленного узла
+		var remoteID int
+		remoteID, err = strconv.Atoi(tokens[0][1])
+		error_catcher.CheckError(err)
+
+		var key int
+		key, err = strconv.Atoi(tokens[0][3])
+		error_catcher.CheckError(err)
+
+		tables.AddRegisteredClient(remoteID, tokens[0][2], key)
 		break
 	}
 }

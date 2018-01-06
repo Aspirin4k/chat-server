@@ -8,6 +8,8 @@ const PORT = 7777
 const PORT_CLIENTS = 7778
 const FINGERS_SIZE = 8
 const HASH_SIZE = 256
+const REGISTERED_CLIENTS_LOCATION = "./clients.txt"
+const DELIM = "|^|"
 
 type Finger struct {
 	Node 	int
@@ -19,6 +21,15 @@ type ActiveClient struct {
 	Address  *net.TCPAddr
 }
 
+type RegisteredClient struct {
+	ClientID int
+	Nickname string
+	Key      int
+}
+
+/**
+Команды, используемые при коммуникации между серверными узлами
+ */
 type Command int
 const (
 	NODE_JOINING Command = 1 + iota
@@ -30,6 +41,8 @@ const (
 	FINGERS_UPDATE
 	CLIENT_LOGIN
 	CLIENT_ADD_TO_ONLINE_CLIENTS
+	CLIENT_NEW
+	CLIENT_ADD_TO_REGISTERED_CLIENTS
 	UNKNOWN
 )
 
@@ -53,6 +66,10 @@ func GetCommandByValue(command int) Command {
 		return CLIENT_LOGIN
 	case 9:
 		return CLIENT_ADD_TO_ONLINE_CLIENTS
+	case 10:
+		return CLIENT_NEW
+	case 11:
+		return CLIENT_ADD_TO_REGISTERED_CLIENTS
 	}
 
 	return UNKNOWN
@@ -62,7 +79,8 @@ func GetCommandByValue(command int) Command {
 Команды со стороны клиента
  */
 const (
-	CLIENT_HELLO = 201
+	CLIENT_HELLO 	= 201
+	CLIENT_REGISTER = 202
 )
 
 /**
@@ -71,4 +89,5 @@ const (
 const (
 	FINGERS_CHANGED = "FINGERS_CHANGED"
 	ACTIVE_CLIENTS_CHANGED = "ACTIVE_CLIENTS_CHANGED"
+	REGISTERED_CLIENTS_CHANGED = "REGISTERED_CLIENTS_CHANGED"
 )

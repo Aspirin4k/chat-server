@@ -51,5 +51,20 @@ func HandleClient(conn net.Conn) {
 			network_operations.Loggining(node, hashId, strings.Split(conn.RemoteAddr().String(), ":")[0])
 		}
 		break
+	// Клиент желает зарегистрироваться в системе
+	case declarations.CLIENT_REGISTER:
+		error_catcher.PushMessage("Registering new client!")
+
+		hashId := utils.GetHash(tokens[0][1])
+		node, isSuccessor := tables.FindFinger(hashId, ServerID)
+
+		if isSuccessor {
+			network_operations.AddToRegistered(
+				node, hashId, tokens[0][2], tokens[0][3], strings.Split(conn.RemoteAddr().String(), ":")[0])
+		} else {
+			network_operations.Registering(
+				node, hashId, tokens[0][2], tokens[0][3], strings.Split(conn.RemoteAddr().String(), ":")[0])
+		}
+		break
 	}
 }

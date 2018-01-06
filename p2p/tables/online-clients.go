@@ -26,3 +26,9 @@ func RemoveActiveClientByKey(id int) {
 
 	trigger.Fire(declarations.ACTIVE_CLIENTS_CHANGED, ActiveClientsTable)
 }
+
+func RemoveActiveClientByIndex(i int) {
+	ActiveClientsTable = append(ActiveClientsTable[:i], ActiveClientsTable[i+1:]...)
+
+	trigger.Fire(declarations.ACTIVE_CLIENTS_CHANGED, ActiveClientsTable)
+}

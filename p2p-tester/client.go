@@ -27,7 +27,10 @@ func main() {
 	// network_operations.Join(p2p.ServerAddress, p2p.ServerID, p2p.ServerAddress)
 	// network_operations.JoinAddBefore(p2p.ServerAddress, p2p.ServerID, "192.168.1.103")
 	// network_operations.ReceiveIDs(p2p.ServerAddress, p2p.ServerID, p2p.ServerID)
+	//network_operations.SendMessage(
+	//	network_operations.ParseAddress(*remote, 7778),
+	//	fmt.Sprintf("%d %s", declarations.CLIENT_HELLO, "asaasb"))
 	network_operations.SendMessage(
 		network_operations.ParseAddress(*remote, 7778),
-		fmt.Sprintf("%d %s", declarations.CLIENT_HELLO, "bob"))
+		fmt.Sprintf("%d %s %s %d", declarations.CLIENT_REGISTER, "aazxd", "znt", 12345))
 }

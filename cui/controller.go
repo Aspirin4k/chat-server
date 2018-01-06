@@ -21,6 +21,10 @@ func UpdateChanges(event string) interface{} {
 		return func(table []declarations.ActiveClient) {
 			updateActiveClientsTable(activeClients, table, g)
 		}
+	case declarations.REGISTERED_CLIENTS_CHANGED:
+		return func(table []declarations.RegisteredClient) {
+			updateRegisteredClientsTable(registeredClients, table, g)
+		}
 	}
 
 	return nil
